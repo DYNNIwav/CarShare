@@ -23,6 +23,11 @@ struct ContentView: View {
                 .tabItem {
                     Label("History", systemImage: "clock.fill")
                 }
+            
+            SummaryView()
+                .tabItem {
+                    Label("Summary", systemImage: "list.bullet.rectangle")
+                }
         }
         .environmentObject(tripStore)
         .environmentObject(locationStore)

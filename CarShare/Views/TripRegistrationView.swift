@@ -3,7 +3,6 @@ import MapKit
 
 struct TripRegistrationView: View {
     // MARK: - Properties
-    // Core properties
     @EnvironmentObject private var tripStore: TripStore
     @State private var selectedCar: Car?
     @State private var description: String = ""
@@ -11,7 +10,6 @@ struct TripRegistrationView: View {
     @State private var selectedDate = Date()
     @State private var showingConfirmation = false
     
-    // Distance calculation properties
     @State private var kilometers: String = ""
     @State private var isUsingRoute = false
     @State private var startLocation: Location?
@@ -19,7 +17,6 @@ struct TripRegistrationView: View {
     @State private var route: MKRoute?
     @State private var isCalculatingRoute = false
     
-    // Location and map properties
     @StateObject private var locationManager = LocationManager.shared
     private let defaultRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 59.9139, longitude: 10.7522),
@@ -27,15 +24,12 @@ struct TripRegistrationView: View {
     )
     @State private var camera: MapCameraPosition
     
-    // Zone properties
     @State private var selectedZone: Zone = Zone.zones[0]
     
-    // Constants
     let cars = [
         Car(id: UUID(), name: "Roy", licensePlate: "EV89790")
     ]
     
-    // MARK: - Initialization
     init() {
         let region = MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 59.9139, longitude: 10.7522),
@@ -44,15 +38,13 @@ struct TripRegistrationView: View {
         _camera = State(initialValue: .region(region))
     }
     
-    // MARK: - Body
     var body: some View {
         NavigationStack {
             Form {
-                carSection
-                distanceSection
+                detailsSection
                 dateSection
                 participantsSection
-                detailsSection
+                distanceSection
                 zoneSection
                 registerSection
             }
@@ -75,20 +67,55 @@ struct TripRegistrationView: View {
         }
     }
     
-    // MARK: - View Sections
-    private var carSection: some View {
-        Section(header: Text("Car")) {
-            HStack {
-                Image(systemName: "car.fill")
-                    .foregroundColor(.blue)
-                Text("Roy (Ford Focus)")
-                    .font(.headline)
+    private var detailsSection: some View {
+        Section(header: Text("Trip Details").font(.headline)) {
+            TextField("Description", text: $description)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+        }
+        .listRowBackground(Color.clear)
+    }
+    
+    private var participantsSection: some View {
+        Section(header: Text("Participants").font(.headline)) {
+            ForEach(User.users) { user in
+                HStack {
+                    Text(user.name)
+                    Spacer()
+                    if selectedUsers.contains(user) {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(.blue)
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if selectedUsers.contains(user) {
+                        selectedUsers.remove(user)
+                    } else {
+                        selectedUsers.insert(user)
+                    }
+                }
             }
         }
+        .listRowBackground(Color.clear)
+    }
+    
+    private var dateSection: some View {
+        Section(header: Text("Date").font(.headline)) {
+            DatePicker(
+                "Trip Date",
+                selection: $selectedDate,
+                displayedComponents: [.date]
+            )
+            .datePickerStyle(.compact)
+        }
+        .listRowBackground(Color.clear)
     }
     
     private var distanceSection: some View {
-        Section(header: Text("Distance")) {
+        Section(header: Text("Distance").font(.headline)) {
             Toggle("Calculate using route", isOn: $isUsingRoute)
             
             if isUsingRoute {
@@ -97,6 +124,7 @@ struct TripRegistrationView: View {
                 manualInputView
             }
         }
+        .listRowBackground(Color.clear)
     }
     
     private var routeInputView: some View {
@@ -123,6 +151,10 @@ struct TripRegistrationView: View {
         VStack {
             TextField("Kilometers", text: $kilometers)
                 .keyboardType(.decimalPad)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
             
             if let kilometers = Double(kilometers),
                let price = calculatePrice(kilometers: kilometers) {
@@ -130,6 +162,7 @@ struct TripRegistrationView: View {
                     Image(systemName: "creditcard")
                     Text(String(format: "%.2f kr", price))
                 }
+                .padding(.top, 4)
             }
         }
     }
@@ -169,41 +202,8 @@ struct TripRegistrationView: View {
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
     
-    private var dateSection: some View {
-        Section(header: Text("Date")) {
-            DatePicker(
-                "Trip Date",
-                selection: $selectedDate,
-                displayedComponents: [.date]
-            )
-        }
-    }
-    
-    private var participantsSection: some View {
-        Section(header: Text("Participants")) {
-            ForEach(User.users) { user in
-                Toggle(user.name, isOn: Binding(
-                    get: { selectedUsers.contains(user) },
-                    set: { isSelected in
-                        if isSelected {
-                            selectedUsers.insert(user)
-                        } else {
-                            selectedUsers.remove(user)
-                        }
-                    }
-                ))
-            }
-        }
-    }
-    
-    private var detailsSection: some View {
-        Section(header: Text("Trip Details")) {
-            TextField("Description", text: $description)
-        }
-    }
-    
     private var zoneSection: some View {
-        Section(header: Text("Zone")) {
+        Section(header: Text("Zone").font(.headline)) {
             Picker("Select Zone", selection: $selectedZone) {
                 ForEach(Zone.zones) { zone in
                     Text("\(zone.name) (\(zone.priceDescription))")
@@ -212,6 +212,7 @@ struct TripRegistrationView: View {
             }
             .pickerStyle(.menu)
         }
+        .listRowBackground(Color.clear)
     }
     
     private var registerSection: some View {
@@ -219,10 +220,12 @@ struct TripRegistrationView: View {
             Button("Register Trip") {
                 registerTrip()
             }
+            .buttonStyle(.borderedProminent)
             .disabled((!isUsingRoute && kilometers.isEmpty) || 
                      (isUsingRoute && route == nil) || 
                      selectedUsers.isEmpty)
         }
+        .listRowBackground(Color.clear)
     }
     
     // MARK: - Helper Methods
@@ -296,7 +299,11 @@ struct TripRegistrationView: View {
             kilometers: kilometers,
             description: description,
             participants: selectedUsers,
-            isOsloArea: selectedZone.isOsloArea
+            isOsloArea: selectedZone.isOsloArea,
+            isUsingRoute: isUsingRoute,
+            startLocation: startLocation,
+            endLocation: endLocation,
+            selectedZone: selectedZone
         )
         
         tripStore.addTrip(trip)

@@ -1,11 +1,19 @@
 import Foundation
 
-struct Zone: Identifiable, Hashable {
-    let id: UUID = UUID()
+struct Zone: Identifiable, Hashable, Codable {
+    let id: UUID
     let name: String
     let range: ClosedRange<Double>
     let pricePerKm: Double
     let isOsloArea: Bool
+    
+    init(id: UUID = UUID(), name: String, range: ClosedRange<Double>, pricePerKm: Double, isOsloArea: Bool) {
+        self.id = id
+        self.name = name
+        self.range = range
+        self.pricePerKm = pricePerKm
+        self.isOsloArea = isOsloArea
+    }
     
     static let zones = [
         Zone(name: "0-50km (Oslo + Bærum)", range: 0...50, pricePerKm: 4.5, isOsloArea: true),
@@ -34,5 +42,34 @@ struct Zone: Identifiable, Hashable {
     
     static func == (lhs: Zone, rhs: Zone) -> Bool {
         lhs.id == rhs.id
+    }
+    
+    // Add custom Codable implementation for ClosedRange
+    enum CodingKeys: String, CodingKey {
+        case id, name, pricePerKm, isOsloArea
+        case rangeLower = "rangeLowerBound"
+        case rangeUpper = "rangeUpperBound"
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        pricePerKm = try container.decode(Double.self, forKey: .pricePerKm)
+        isOsloArea = try container.decode(Bool.self, forKey: .isOsloArea)
+        
+        let lower = try container.decode(Double.self, forKey: .rangeLower)
+        let upper = try container.decode(Double.self, forKey: .rangeUpper)
+        range = lower...upper
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(pricePerKm, forKey: .pricePerKm)
+        try container.encode(isOsloArea, forKey: .isOsloArea)
+        try container.encode(range.lowerBound, forKey: .rangeLower)
+        try container.encode(range.upperBound, forKey: .rangeUpper)
     }
 } 

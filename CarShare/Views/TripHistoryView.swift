@@ -29,15 +29,20 @@ struct TripHistoryView: View {
                 .padding()
                 
                 List {
-                    if filteredTrips.isEmpty {
-                        Text(selectedUser == nil ? "No trips registered yet" : "No trips found for \(selectedUser?.name ?? "")")
+                    if tripStore.trips.isEmpty {
+                        Text("No trips registered yet")
+                            .foregroundColor(.secondary)
+                    } else if filteredTrips.isEmpty && selectedUser != nil {
+                        Text("No trips found for \(selectedUser?.name ?? "")")
                             .foregroundColor(.secondary)
                     } else {
                         ForEach(filteredTrips) { trip in
-                            if selectedUser == nil {
-                                AllTripsRow(trip: trip)
-                            } else {
-                                UserTripRow(trip: trip, user: selectedUser!)
+                            NavigationLink(destination: EditTripView(trip: trip)) {
+                                if selectedUser == nil {
+                                    AllTripsRow(trip: trip)
+                                } else {
+                                    UserTripRow(trip: trip, user: selectedUser!)
+                                }
                             }
                         }
                         .onDelete(perform: { indexSet in
@@ -56,19 +61,16 @@ struct TripHistoryView: View {
 struct AllTripsRow: View {
     let trip: Trip
     
-    private var zoneInfo: Zone {
-        Zone.zones.first { zone in
-            zone.range.contains(trip.kilometers) && 
-            (zone.range.upperBound <= 50 ? zone.isOsloArea == trip.isOsloArea : true)
-        } ?? Zone.zones.last!
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(trip.car.name)
                 .font(.headline)
             Text(trip.description)
                 .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Text("Participants: \(trip.participants.map { $0.name }.joined(separator: ", "))")
+                .font(.caption)
                 .foregroundColor(.secondary)
             
             HStack {
@@ -93,13 +95,6 @@ struct AllTripsRow: View {
 struct UserTripRow: View {
     let trip: Trip
     let user: User
-    
-    private var zoneInfo: Zone {
-        Zone.zones.first { zone in
-            zone.range.contains(trip.kilometers) && 
-            (zone.range.upperBound <= 50 ? zone.isOsloArea == trip.isOsloArea : true)
-        } ?? Zone.zones.last!
-    }
     
     private var costPerParticipant: Double {
         trip.totalPrice / Double(trip.participants.count)

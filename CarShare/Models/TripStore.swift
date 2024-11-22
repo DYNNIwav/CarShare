@@ -11,9 +11,15 @@ class TripStore: ObservableObject {
     
     func addTrip(_ trip: Trip) {
         trips.append(trip)
-        // Sort trips by date, newest first
         trips.sort { $0.date > $1.date }
         saveTrips()
+    }
+    
+    func updateTrip(_ updatedTrip: Trip) {
+        if let index = trips.firstIndex(where: { $0.id == updatedTrip.id }) {
+            trips[index] = updatedTrip
+            saveTrips()
+        }
     }
     
     private func saveTrips() {
@@ -37,7 +43,6 @@ class TripStore: ObservableObject {
         }
     }
     
-    // Updated delete function to handle multiple trips
     func deleteTrips(_ tripsToDelete: [Trip]) {
         trips.removeAll { trip in
             tripsToDelete.contains { $0.id == trip.id }
@@ -45,7 +50,6 @@ class TripStore: ObservableObject {
         saveTrips()
     }
     
-    // Keep the original delete function for backward compatibility
     func deleteTrip(at indexSet: IndexSet) {
         trips.remove(atOffsets: indexSet)
         saveTrips()

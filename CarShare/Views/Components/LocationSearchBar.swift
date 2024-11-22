@@ -9,7 +9,6 @@ struct LocationSearchBar: View {
     @State private var completer: MKLocalSearchCompleter
     @State private var isSearching = false
     @StateObject private var delegate = SearchCompleterDelegate()
-    @State private var showingCommonLocations = false
     
     init(placeholder: String, location: Binding<Location?>) {
         self.placeholder = placeholder
@@ -40,6 +39,7 @@ struct LocationSearchBar: View {
                     Button(action: {
                         searchText = ""
                         suggestions = []
+                        location = nil
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.gray)
@@ -49,9 +49,7 @@ struct LocationSearchBar: View {
                 Menu {
                     ForEach(CommonLocation.locations) { location in
                         Button(location.name) {
-                            self.location = location
-                            self.searchText = location.name
-                            suggestions = []
+                            selectLocation(location)
                         }
                     }
                 } label: {
@@ -92,8 +90,16 @@ struct LocationSearchBar: View {
         }
     }
     
+    private func selectLocation(_ location: Location) {
+        self.location = location
+        self.searchText = location.name
+        self.suggestions = []
+    }
+    
     private func searchLocation(from suggestion: MKLocalSearchCompletion) {
         let searchRequest = MKLocalSearch.Request(completion: suggestion)
+        searchText = suggestion.title // Update text immediately
+        suggestions = [] // Clear suggestions immediately
         
         MKLocalSearch(request: searchRequest).start { response, error in
             guard let response = response,
@@ -102,13 +108,11 @@ struct LocationSearchBar: View {
             }
             
             let newLocation = Location(
-                name: suggestion.title + (suggestion.subtitle.isEmpty ? "" : ", \(suggestion.subtitle)"),
+                name: suggestion.title,
                 coordinate: item.placemark.coordinate
             )
             
             location = newLocation
-            searchText = suggestion.title
-            suggestions = []
         }
     }
 }
