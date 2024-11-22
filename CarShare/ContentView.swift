@@ -8,14 +8,27 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var tripStore = TripStore()
+    @StateObject private var locationStore = LocationStore()
+    @StateObject private var locationManager = LocationManager.shared
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            TripRegistrationView()
+                .tabItem {
+                    Label("New Trip", systemImage: "car.fill")
+                }
+            
+            TripHistoryView()
+                .tabItem {
+                    Label("History", systemImage: "clock.fill")
+                }
         }
-        .padding()
+        .environmentObject(tripStore)
+        .environmentObject(locationStore)
+        .onAppear {
+            locationManager.requestLocationPermission()
+        }
     }
 }
 
