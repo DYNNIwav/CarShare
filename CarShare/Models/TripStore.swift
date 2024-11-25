@@ -13,12 +13,15 @@ class TripStore: ObservableObject {
         trips.append(trip)
         trips.sort { $0.date > $1.date }
         saveTrips()
+        objectWillChange.send()
     }
     
     func updateTrip(_ updatedTrip: Trip) {
         if let index = trips.firstIndex(where: { $0.id == updatedTrip.id }) {
             trips[index] = updatedTrip
+            trips.sort { $0.date > $1.date }
             saveTrips()
+            objectWillChange.send()
         }
     }
     
@@ -38,6 +41,7 @@ class TripStore: ObservableObject {
         do {
             let decoder = JSONDecoder()
             trips = try decoder.decode([Trip].self, from: data)
+            objectWillChange.send()
         } catch {
             print("Failed to load trips: \(error.localizedDescription)")
         }
@@ -48,10 +52,12 @@ class TripStore: ObservableObject {
             tripsToDelete.contains { $0.id == trip.id }
         }
         saveTrips()
+        objectWillChange.send()
     }
     
     func deleteTrip(at indexSet: IndexSet) {
         trips.remove(atOffsets: indexSet)
         saveTrips()
+        objectWillChange.send()
     }
 } 

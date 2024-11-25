@@ -1,7 +1,7 @@
 import Foundation
 import CoreLocation
 
-struct Trip: Identifiable, Codable {
+struct Trip: Identifiable, Codable, Equatable {
     var id: UUID
     var car: Car
     var date: Date
@@ -15,6 +15,10 @@ struct Trip: Identifiable, Codable {
     var startLocation: Location?
     var endLocation: Location?
     var selectedZone: Zone
+    
+    static func == (lhs: Trip, rhs: Trip) -> Bool {
+        lhs.id == rhs.id
+    }
     
     enum CodingKeys: CodingKey {
         case id, car, date, kilometers, description, participants, isOsloArea, totalPrice
